@@ -5,24 +5,19 @@ export default function Login() {
   const { login } = useAuth();
   const [name, setName] = useState('');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e) => {
+  function handleSubmit(e) {
     e.preventDefault();
     if (!name.trim()) {
-      setError('Ingresa tu nombre para continuar');
+      setError('Escribe tu nombre');
       return;
     }
-    setLoading(true);
-    setError('');
     try {
-      await login(name.trim());
+      login(name);
     } catch (err) {
       setError(err.message);
-    } finally {
-      setLoading(false);
     }
-  };
+  }
 
   return (
     <div className="login-page">
@@ -36,9 +31,9 @@ export default function Login() {
         <div className="login-brand">
           <div className="logo-icon">
             <svg viewBox="0 0 48 48" fill="none">
-              <circle cx="24" cy="24" r="22" stroke="currentColor" strokeWidth="2"/>
-              <path d="M24 8 C16 8 10 16 10 24 C10 32 16 40 24 40" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
-              <circle cx="24" cy="24" r="4" fill="currentColor"/>
+              <circle cx="24" cy="24" r="22" stroke="currentColor" strokeWidth="2" />
+              <path d="M24 8 C16 8 10 16 10 24 C10 32 16 40 24 40" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+              <circle cx="24" cy="24" r="4" fill="currentColor" />
             </svg>
           </div>
           <h1>NutriLeo</h1>
@@ -47,12 +42,12 @@ export default function Login() {
 
         <form className="login-form glass-card" onSubmit={handleSubmit}>
           <h2>Iniciar Sesión</h2>
-          <p className="form-subtitle">Ingresa tu nombre para registrar tu servicio</p>
+          <p className="form-subtitle">Ingresa tu nombre para continuar</p>
 
           {error && <div className="alert alert-error">{error}</div>}
 
           <div className="form-group">
-            <label htmlFor="name">Nombre del Nutricionista</label>
+            <label htmlFor="name">Nutricionista</label>
             <input
               id="name"
               type="text"
@@ -63,12 +58,10 @@ export default function Login() {
             />
           </div>
 
-          <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
-            {loading ? 'Ingresando...' : 'Ingresar al Sistema'}
+          <button type="submit" className="btn btn-primary btn-full">
+            Entrar
           </button>
         </form>
-
-        <p className="login-footer">Acceso exclusivo para personal clínico</p>
       </div>
     </div>
   );

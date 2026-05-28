@@ -1,8 +1,8 @@
-export default function LoadingScreen() {
+export default function Loading() {
   return (
     <div className="loading-screen">
       <div className="loading-spinner" />
-      <p>Cargando NutriLeo...</p>
+      <p>Cargando...</p>
     </div>
   );
 }

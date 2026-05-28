@@ -1,6 +1,5 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { api } from '../services/api';
-import { storage } from '../services/storage';
+import { createContext, useContext, useState, useEffect } from 'react';
+import { obtenerSesion, iniciarSesion, cerrarSesion } from '../utils/data';
 
 const AuthContext = createContext(null);
 
@@ -8,26 +7,21 @@ export function AuthProvider({ children }) {
   const [nutritionist, setNutritionist] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const checkAuth = useCallback(async () => {
-    const saved = storage.getAuth();
-    if (saved) {
-      setNutritionist(saved);
-    }
+  useEffect(() => {
+    const sesion = obtenerSesion();
+    if (sesion) setNutritionist(sesion);
     setLoading(false);
   }, []);
 
-  useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
-
-  const login = async (name) => {
-    const data = await api.login(name);
-    setNutritionist(data.nutritionist);
-    return data;
+  const login = (name) => {
+    if (!name.trim()) throw new Error('El nombre es requerido');
+    const user = iniciarSesion(name);
+    setNutritionist(user);
+    return user;
   };
 
-  const logout = async () => {
-    await api.logout();
+  const logout = () => {
+    cerrarSesion();
     setNutritionist(null);
   };
 
@@ -39,7 +33,5 @@ export function AuthProvider({ children }) {
 }
 
 export function useAuth() {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth debe usarse dentro de AuthProvider');
-  return ctx;
+  return useContext(AuthContext);
 }

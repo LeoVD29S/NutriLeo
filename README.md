@@ -1,18 +1,10 @@
 # NutriLeo
 
-Sistema web para personal clínico de la clínica nutricional **NutriLeo**. Gestiona pacientes, calcula IMC automáticamente y mantiene un historial cronológico de consultas.
+App web para gestionar pacientes y consultas en una clínica nutricional.
 
-Los datos se guardan en **sessionStorage** del navegador (sin base de datos). Al cerrar la pestaña o el navegador, la información se pierde.
+Los datos viven en **sessionStorage** del navegador. Si cierras la pestaña, se pierden.
 
-## Funcionalidades
-
-- **Acceso seguro:** login con nombre del nutricionista y rutas protegidas
-- **Pacientes:** registro con IMC y diagnóstico automático, CRUD en la misma ventana
-- **Consultas:** historial cronológico con actualización en tiempo real (sin F5)
-
-## Inicio rápido
-
-### Desarrollo
+## Cómo correrlo
 
 ```powershell
 cd frontend
@@ -22,7 +14,7 @@ npm run dev
 
 Abre http://localhost:5173
 
-### Docker
+## Docker
 
 ```powershell
 docker compose up --build
@@ -30,23 +22,13 @@ docker compose up --build
 
 Abre http://localhost:3000
 
-## Stack
-
-- React 18 + Vite
-- sessionStorage (sin backend ni BD)
-- Docker + Nginx
-
 ## Estructura
 
 ```
-NutriLeo/
-├── frontend/
-│   └── src/
-│       ├── components/
-│       ├── pages/
-│       ├── services/
-│       └── context/
-├── Dockerfile
-├── docker-compose.yml
-└── nginx.conf
+frontend/src/
+  components/     PatientPanel, ConsultationPanel, Loading
+  context/        AuthContext
+  pages/          Login, Dashboard
+  utils/          bmi.js, data.js
+  styles/         global.css
 ```

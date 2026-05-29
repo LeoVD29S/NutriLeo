@@ -130,3 +130,9 @@ export function actualizarConsulta(id, datos) {
 export function eliminarConsulta(id) {
   guardar(CONSULTAS_KEY, leer(CONSULTAS_KEY, []).filter((c) => c.id !== id));
 }
+
+export function limpiarDatos() {
+  sessionStorage.removeItem(PACIENTES_KEY);
+  sessionStorage.removeItem(CONSULTAS_KEY);
+  sessionStorage.removeItem(ID_KEY);
+}

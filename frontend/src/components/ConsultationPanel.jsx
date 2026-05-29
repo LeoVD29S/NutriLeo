@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { obtenerSesion, listarPacientes, listarConsultas, crearConsulta, actualizarConsulta, eliminarConsulta } from '../utils/data';
+import Toast from './Toast';
 
 function formInicial() {
   return {
@@ -17,6 +18,7 @@ export default function ConsultationPanel({ paciente, onElegirPaciente }) {
   const [form, setForm] = useState(formInicial());
   const [editando, setEditando] = useState(null);
   const [error, setError] = useState('');
+  const [toast, setToast] = useState('');
   const [filtro, setFiltro] = useState('');
 
   function cargarConsultas(idFiltro) {
@@ -50,8 +52,10 @@ export default function ConsultationPanel({ paciente, onElegirPaciente }) {
       const datos = { ...form, patient_id: Number(form.patient_id) };
       if (editando) {
         actualizarConsulta(editando, datos);
+        setToast('Consulta actualizada');
       } else {
         crearConsulta(datos, obtenerSesion());
+        setToast('Consulta registrada en el historial');
       }
       setForm({ ...formInicial(), patient_id: form.patient_id });
       setEditando(null);
@@ -70,15 +74,17 @@ export default function ConsultationPanel({ paciente, onElegirPaciente }) {
       evolution: c.evolution,
       meal_plan: c.meal_plan,
     });
+    setError('');
   }
 
   function borrar(id) {
-    if (!confirm('¿Eliminar consulta?')) return;
+    if (!confirm('¿Eliminar esta consulta del historial?')) return;
     eliminarConsulta(id);
     if (editando === id) {
       setEditando(null);
       setForm(formInicial());
     }
+    setToast('Consulta eliminada');
     cargarConsultas();
   }
 
@@ -88,33 +94,49 @@ export default function ConsultationPanel({ paciente, onElegirPaciente }) {
     cargarConsultas(val);
     const p = pacientes.find((x) => String(x.id) === val);
     if (p) onElegirPaciente(p);
+    else onElegirPaciente(null);
   }
 
   function formatearFecha(fecha) {
     return new Date(fecha + 'T00:00:00').toLocaleDateString('es-MX', {
       day: '2-digit',
-      month: 'short',
+      month: 'long',
       year: 'numeric',
     });
   }
 
   return (
     <div className="panel">
-      <div className="panel-header">
-        <div>
-          <h2>Consultas</h2>
-          <p>Historial por paciente, ordenado del más reciente al más antiguo.</p>
-        </div>
-        <div className="stat-badge">
+      <Toast mensaje={toast} onClose={() => setToast('')} />
+
+      <div className="stats-row">
+        <div className="stat-card">
+          <span className="stat-label">Consultas en historial</span>
           <span className="stat-number">{consultas.length}</span>
-          <span className="stat-label">Total</span>
+        </div>
+        <div className="stat-card stat-card-light">
+          <span className="stat-label">Pacientes disponibles</span>
+          <span className="stat-number">{pacientes.length}</span>
         </div>
       </div>
 
       <div className="panel-grid">
-        <section className="form-section glass-card">
-          <h3>{editando ? 'Editar consulta' : 'Nueva consulta'}</h3>
+        <section className="card card-form">
+          <div className="card-title">
+            <span className="card-icon">✎</span>
+            <div>
+              <h3>{editando ? 'Editar consulta' : 'Nueva consulta'}</h3>
+              <p>Nota clínica y plan alimenticio</p>
+            </div>
+          </div>
+
           {error && <div className="alert alert-error">{error}</div>}
+
+          {pacientes.length === 0 && (
+            <div className="alert alert-info">
+              Primero registra un paciente en la sección Pacientes.
+            </div>
+          )}
 
           <form onSubmit={handleSubmit}>
             <div className="form-group">
@@ -128,8 +150,9 @@ export default function ConsultationPanel({ paciente, onElegirPaciente }) {
                   cargarConsultas(e.target.value);
                 }}
                 required
+                disabled={pacientes.length === 0}
               >
-                <option value="">Selecciona...</option>
+                <option value="">Seleccionar paciente...</option>
                 {pacientes.map((p) => (
                   <option key={p.id} value={p.id}>{p.name}</option>
                 ))}
@@ -138,7 +161,7 @@ export default function ConsultationPanel({ paciente, onElegirPaciente }) {
 
             <div className="form-row">
               <div className="form-group">
-                <label>Fecha</label>
+                <label>Fecha de consulta</label>
                 <input name="consultation_date" type="date" value={form.consultation_date} onChange={handleChange} required />
               </div>
               <div className="form-group">
@@ -148,13 +171,13 @@ export default function ConsultationPanel({ paciente, onElegirPaciente }) {
             </div>
 
             <div className="form-group">
-              <label>Evolución</label>
-              <textarea name="evolution" value={form.evolution} onChange={handleChange} rows="3" required />
+              <label>Evolución clínica</label>
+              <textarea name="evolution" value={form.evolution} onChange={handleChange} rows="4" placeholder="Progreso, síntomas, observaciones..." required />
             </div>
 
             <div className="form-group">
               <label>Plan alimenticio</label>
-              <textarea name="meal_plan" value={form.meal_plan} onChange={handleChange} rows="3" required />
+              <textarea name="meal_plan" value={form.meal_plan} onChange={handleChange} rows="4" placeholder="Desayuno, comida, cena, recomendaciones..." required />
             </div>
 
             <div className="form-actions">
@@ -163,59 +186,69 @@ export default function ConsultationPanel({ paciente, onElegirPaciente }) {
                   Cancelar
                 </button>
               )}
-              <button type="submit" className="btn btn-primary">
-                {editando ? 'Guardar' : 'Registrar'}
+              <button type="submit" className="btn btn-primary" disabled={pacientes.length === 0}>
+                {editando ? 'Guardar cambios' : 'Registrar consulta'}
               </button>
             </div>
           </form>
         </section>
 
-        <section className="table-section glass-card">
-          <div className="table-header">
-            <h3>Historial</h3>
-            <div className="table-filters">
-              <select value={filtro} onChange={cambiarFiltro}>
-                <option value="">Todos</option>
-                {pacientes.map((p) => (
-                  <option key={p.id} value={p.id}>{p.name}</option>
-                ))}
-              </select>
-              <button type="button" className="btn btn-ghost btn-sm" onClick={() => cargarConsultas()}>Refrescar</button>
+        <section className="card card-table">
+          <div className="card-title">
+            <span className="card-icon card-icon-blue">🕐</span>
+            <div>
+              <h3>Historial clínico</h3>
+              <p>Más recientes primero · se actualiza automáticamente</p>
             </div>
+          </div>
+
+          <div className="table-filters">
+            <label htmlFor="filtro-paciente">Filtrar por paciente</label>
+            <select id="filtro-paciente" value={filtro} onChange={cambiarFiltro}>
+              <option value="">Todos los pacientes</option>
+              {pacientes.map((p) => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
           </div>
 
           {consultas.length === 0 ? (
             <div className="empty-state">
-              <p>Sin consultas</p>
+              <div className="empty-icon">📋</div>
+              <p>Sin consultas registradas</p>
+              <span>Las notas aparecerán aquí al guardarlas</span>
             </div>
           ) : (
             <div className="consultation-list">
-              {consultas.map((c) => (
+              {consultas.map((c, i) => (
                 <article key={c.id} className="consultation-card">
-                  <div className="consultation-card-header">
-                    <div>
-                      <span className="consultation-patient">{c.patient_name}</span>
-                      <span className="consultation-datetime">
-                        {formatearFecha(c.consultation_date)} — {c.consultation_time.slice(0, 5)}
-                      </span>
+                  <div className="timeline-dot">{consultas.length - i}</div>
+                  <div className="consultation-card-inner">
+                    <div className="consultation-card-header">
+                      <div>
+                        <span className="consultation-patient">{c.patient_name}</span>
+                        <span className="consultation-datetime">
+                          {formatearFecha(c.consultation_date)} · {c.consultation_time.slice(0, 5)}
+                        </span>
+                      </div>
+                      <div className="cell-actions">
+                        <button type="button" className="btn btn-ghost btn-sm" onClick={() => editar(c)}>Editar</button>
+                        <button type="button" className="btn btn-danger btn-sm" onClick={() => borrar(c.id)}>Borrar</button>
+                      </div>
                     </div>
-                    <div className="cell-actions">
-                      <button type="button" className="btn btn-ghost btn-sm" onClick={() => editar(c)}>Editar</button>
-                      <button type="button" className="btn btn-ghost btn-sm" onClick={() => borrar(c.id)}>Borrar</button>
+                    <div className="consultation-card-body">
+                      <div className="consultation-field">
+                        <strong>Evolución</strong>
+                        <p>{c.evolution}</p>
+                      </div>
+                      <div className="consultation-field">
+                        <strong>Plan alimenticio</strong>
+                        <p>{c.meal_plan}</p>
+                      </div>
                     </div>
-                  </div>
-                  <div className="consultation-card-body">
-                    <div className="consultation-field">
-                      <strong>Evolución</strong>
-                      <p>{c.evolution}</p>
+                    <div className="consultation-card-footer">
+                      Atendido por {c.nutritionist_name}
                     </div>
-                    <div className="consultation-field">
-                      <strong>Plan</strong>
-                      <p>{c.meal_plan}</p>
-                    </div>
-                  </div>
-                  <div className="consultation-card-footer">
-                    {c.nutritionist_name}
                   </div>
                 </article>
               ))}
